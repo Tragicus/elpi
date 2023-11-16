@@ -611,6 +611,10 @@ pred length i:list A, o:int.
 length [_|L] N :- length L N1, N is N1 + 1.
 length []    0.
 
+pred const i:int, i:A, o:list A.
+const 0 _ [].
+const M X [X|L] :- M is N + 1, const N L.
+
 pred rev i:list A, o:list A.
 rev L RL  :- rev.aux L []  RL.
 rev.aux [X|XS] ACC R :- rev.aux XS [X|ACC] R.
@@ -704,6 +708,12 @@ pred fold-map i:list A, i:B, i:(A -> B -> C -> B -> prop), o:list C, o:B.
 fold-map [] A _ [] A.
 fold-map [X|XS] A F [Y|YS] A2 :- F X A Y A1, fold-map XS A1 F YS A2.
 
+pred map-pair i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:pair A B, o:pair A1 B1.
+map-pair F G (pr X Y) (pr X1 Y1) :- F X X1, G Y Y1.
+
+pred map-triple i:(A -> A1 -> prop), i:(B -> B1 -> prop), i:(C -> C1 -> prop), i:triple A B C, o:triple A1 B1 C1.
+map-triple F G H (triple X Y Z) (triple X1 Y1 Z1) :- F X X1, G Y Y1, H Z Z1.
+
 pred omap i:option A, i:(A -> B -> prop), o:option B.
 omap none _ none.
 omap (some X) F (some Y) :- F X Y.
@@ -763,6 +773,24 @@ pred filter i:list A, i:(A -> prop), o:list A.
 filter []    _ [].
 filter [X|L] P R :- if (P X) (R = X :: L1) (R = L1), filter L P L1.
 
+pred partition i:list A, i:(A -> prop), o:list A, o:list A.
+partition [] _ [] [].
+partition [X|XS] P [X|YS] ZS :- P X, !, partition XS P YS ZS.
+partition [X|XS] P YS [X|ZS] :- partition XS P YS ZS.
+
+pred diff i:list A, i:list A, o:list A.
+diff L D R :- filter L (x\ not(mem! D x)) R.
+
+% [eq-set L1 L2] asserts that L1 and L2 contain the same set of elements
+pred eq-set i:list A, i:list A.
+eq-set L1 L2 :- forall L1 (mem L2), forall L2 (mem L1).
+
+pred uniq i:list A, o:list A.
+pred uniq.seen i:A.
+uniq [] [].
+uniq [X|XS] YS :- uniq.seen X, !, uniq XS YS.
+uniq [X|XS] [X|YS] :- uniq.seen X => uniq XS YS.
+
 pred zip i:list A, i:list B, o:list (pair A B).
 zip [_|_] [] _ :- fatal-error "zip on lists of different length".
 zip [] [_|_] _ :- fatal-error "zip on lists of different length".
@@ -792,6 +820,31 @@ intersperse _ [] [].
 intersperse _ [X] [X] :- !.
 intersperse Sep [X|XS] [X,Sep|YS] :- intersperse Sep XS YS.
 
+pred sort.split i:list A, o:list A, o:list A.
+sort.split [] [] [] :- !.
+sort.split [X] [X] [] :- !.
+sort.split [X,Y|TL] [X|L1] [Y|L2] :- sort.split TL L1 L2.
+
+pred sort.merge i:(A -> A -> prop), i:list A, i:list A, o:list A.
+sort.merge _ [] L L :- !.
+sort.merge _ L [] L :- !.
+sort.merge Rel [X1|L1] [X2|L2] [X1|M] :- Rel X1 X2, !,
+  sort.merge Rel L1 [X2|L2] M.
+sort.merge Rel [X1|L1] [X2|L2] [X2|M] :-
+  sort.merge Rel [X1|L1] L2 M.
+
+pred sort i:list A, i:(A -> A -> prop), o:list A.
+sort [] _ [] :- !.
+sort [X] _ [X] :- !.
+sort L Rel M :-
+  sort.split L L1 L2, sort L1 Rel S1, sort L2 Rel S2, sort.merge Rel S1 S2 M.
+
+pred bubblesort i:list A, i:(A -> A -> prop), o:list A.
+bubblesort [] _ [] :- !.
+bubblesort [X] _ [X] :- !.
+bubblesort [X,Y|TL] Rel [X|Rest1] :- Rel X Y, !, bubblesort [Y|TL] Rel Rest1.
+bubblesort [X,Y|TL] Rel [Y|Rest1] :- bubblesort [X|TL] Rel Rest1.
+
 %  -- Misc --
 
 pred flip i:(A -> B -> prop), i:B, i:A.
@@ -820,6 +873,17 @@ while-ok-do! (error _ as E) _ E.
 while-ok-do! ok [] ok.
 while-ok-do! ok [P|PS] R :- P C, !, while-ok-do! C PS R.
 
+pred under.do! i:((A -> Prop) -> A -> prop), i:list prop.
+under.do! Then LP :- Then (_\ do! LP) _.
+
+pred time-do! i:list prop.
+time-do! [].
+time-do! [P|PS] :-
+  time P Time, !,
+  if (constant P C _) true (C = P),
+  coq.say Time ">>" C,
+  time-do! PS.
+
 pred any->string i:A, o:string.
 any->string X Y :- term_to_string X Y.
 
@@ -832,6 +896,7 @@ pred findall i:prop, o:list prop.
 findall P L :- findall_solutions P L.
 
 }
+
 
 % [std.string.concat Separator Items Result] concatenates Items
 % interspersing Separator
