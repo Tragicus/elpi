@@ -270,6 +270,17 @@ let pair a b = let open AlgebraicData in declare {
   ]
 } |> ContextualConversion.(!<)
 
+let triple a b c = let open AlgebraicData in declare {
+  ty = TyApp ("triple",a.Conversion.ty,[b.Conversion.ty;c.Conversion.ty]);
+  doc = "Triple";
+  pp = (fun fmt o -> Format.fprintf fmt "%a" (Util.pp_triple a.Conversion.pp b.Conversion.pp c.Conversion.pp) o);
+  constructors = [
+    K("triple","",A(a,A(b,A(c,N))),
+      B (fun a b c -> (a,b,c)),
+      M (fun ~ok ~ko:_ -> function (a,b,c) -> ok a b c));
+  ]
+} |> ContextualConversion.(!<)
+
 let option a = let open AlgebraicData in declare {
   ty = TyApp("option",a.Conversion.ty,[]);
   doc = "The option type (aka Maybe)";
@@ -559,6 +570,16 @@ let core_builtins = let open BuiltIn in let open ContextualConversion in [
   LPCode "fst (pr A _) A.";
   LPCode "pred snd  i:pair A B, o:B.";
   LPCode "snd (pr _ B) B.";
+
+  MLData (triple (BuiltInData.poly "A") (BuiltInData.poly "B") (BuiltInData.poly "C"));
+
+  LPCode "pred triple_1 i:triple A B C, o:A.";
+  LPCode "triple_1 (triple A _ _) A.";
+  LPCode "pred triple_2 i:triple A B C, o:B.";
+  LPCode "triple_2 (triple _ B _) B.";
+  LPCode "pred triple_3 i:triple A B C, o:C.";
+  LPCode "triple_3 (triple _ _ C) C.";
+
 
   MLData (option (BuiltInData.poly "A"));
 

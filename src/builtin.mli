@@ -56,6 +56,7 @@ val std_builtins : API.Setup.builtins
 
 (* Type descriptors for built-in predicates *)
 val pair : 'a API.Conversion.t -> 'b API.Conversion.t -> ('a * 'b) API.Conversion.t
+val triple : 'a API.Conversion.t -> 'b API.Conversion.t -> 'c API.Conversion.t -> ('a * 'b * 'c) API.Conversion.t
 val option : 'a API.Conversion.t -> 'a option API.Conversion.t
 val bool : bool API.Conversion.t
 

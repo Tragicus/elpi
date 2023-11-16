@@ -166,6 +166,16 @@ val show_pair :
   (Format.formatter -> 'a -> unit) ->
   (Format.formatter -> 'b -> unit) ->
     ('a * 'b) -> string
+val pp_triple :
+  (Format.formatter -> 'a -> unit) ->
+  (Format.formatter -> 'b -> unit) ->
+  (Format.formatter -> 'c -> unit) ->
+    Format.formatter -> 'a * 'b * 'c -> unit
+val show_triple :
+  (Format.formatter -> 'a -> unit) ->
+  (Format.formatter -> 'b -> unit) ->
+  (Format.formatter -> 'c -> unit) ->
+    ('a * 'b * 'c) -> string
 
 (* for open types *)
 type 'a spaghetti_printer
